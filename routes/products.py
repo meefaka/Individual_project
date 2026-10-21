@@ -11,11 +11,33 @@ async def retrieve_all_products(
     brand: Optional[str] = Query(None, description="Фильтр по бренду (например, Samsung, Apple)"),
     category: Optional[str] = Query(None, description="Фильтр по категории (например, Смартфоны, Ноутбуки)")
 ) -> List[Product]:
+    # 1. Если вообще ни одного товара еще не добавлено
+    if not products:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Каталог пуст: в магазине пока нет ни одного товара"
+        )
+
     res = products
     if brand:
         res = [p for p in res if p.brand.lower() == brand.lower()]
     if category:
         res = [p for p in res if p.category.lower() == category.lower()]
+
+    # 2. Если по фильтрам ничего не найдено
+    if not res:
+        conditions = []
+        if brand:
+            conditions.append(f"бренда '{brand}'")
+        if category:
+            conditions.append(f"в категории '{category}'")
+        
+        detail_msg = f"Товары {', '.join(conditions)} в настоящий момент отсутствуют в наличии"
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=detail_msg
+        )
+
     return res
 
 @product_router.get("/{id}", response_model=Product, summary="Получение товара по ID")
