@@ -6,7 +6,7 @@ product_router = APIRouter(tags=["Товары каталога"])
 
 products: List[Product] = []
 
-@product_router.get("/", response_model=List[Product], summary="Получить все товары (с фильтрацией)")
+@product_router.get("/", response_model=List[Product], summary="Получение всех товаров")
 async def retrieve_all_products(
     brand: Optional[str] = Query(None, description="Фильтр по бренду (например, Samsung, Apple)"),
     category: Optional[str] = Query(None, description="Фильтр по категории (например, Смартфоны, Ноутбуки)")
@@ -18,7 +18,7 @@ async def retrieve_all_products(
         res = [p for p in res if p.category.lower() == category.lower()]
     return res
 
-@product_router.get("/{id}", response_model=Product, summary="Просмотр товара по ID")
+@product_router.get("/{id}", response_model=Product, summary="Получение товара по ID")
 async def retrieve_product(id: int = Path(..., gt=0, description="ID товара")) -> Product:
     for product in products:
         if product.id == id:
@@ -28,7 +28,7 @@ async def retrieve_product(id: int = Path(..., gt=0, description="ID товар�
         detail=f"Ошибка: Товар с идентификатором ID={id} не найден в каталоге"
     )
 
-@product_router.post("/new", status_code=status.HTTP_201_CREATED, summary="Сценарий 1: Заведение товара в каталог")
+@product_router.post("/new", status_code=status.HTTP_201_CREATED, summary="Заведение товара в каталог")
 async def create_product(body: Product = Body(...)) -> dict:
     for product in products:
         if product.id == body.id:
@@ -43,7 +43,7 @@ async def create_product(body: Product = Body(...)) -> dict:
             )
     products.append(body)
     return {
-        "message": "Товар успешно добавлен в каталог интернет-магазина",
+        "message": "Товар успешно добавлен в каталог",
         "product_id": body.id
     }
 
@@ -80,7 +80,7 @@ async def delete_product(id: int = Path(..., gt=0)) -> dict:
         detail=f"Товар с ID={id} не найден для удаления"
     )
 
-@product_router.delete("/", summary="Очистить весь каталог")
+@product_router.delete("/", summary="Удаление всех товаров")
 async def delete_all_products() -> dict:
     if not products:
         raise HTTPException(
