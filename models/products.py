@@ -1,26 +1,28 @@
 from typing import Dict, Optional
+from beanie import Document
 from pydantic import BaseModel, Field
 
-class Product(BaseModel):
-    id: int = Field(..., gt=0, description="Уникальный номер (ID) товара")
-    sku: str = Field(..., min_length=3, description="Артикул производителя (заводской код товара / SKU)")
+class Product(Document):
+    sku: str = Field(..., min_length=3, description="Артикул производителя (SKU)")
     name: str = Field(..., min_length=2, description="Название модели")
     brand: str = Field(..., min_length=2, description="Бренд производителя")
     category: str = Field(..., min_length=2, description="Категория техники")
-    price: float = Field(..., gt=0, description="Цена в рублях (должна быть больше 0)")
+    price: float = Field(..., gt=0, description="Цена в рублях")
     description: str = Field(..., min_length=5, description="Подробное описание товара")
-    specifications: Dict[str, str] = Field(..., description="Технические характеристики (ОЗУ, процессор, дисплей)")
+    specifications: Dict[str, str] = Field(..., description="Технические характеристики")
+
+    class Settings:
+        name = "products"
 
     class Config:
         json_schema_extra = {
             "example": {
-                "id": 1,
-                "sku": "SAM-S24U-512 (Артикул завода-изготовителя)",
+                "sku": "SAM-S24U-512",
                 "name": "Samsung Galaxy S24 Ultra",
                 "brand": "Samsung",
                 "category": "Смартфоны",
                 "price": 139990.0,
-                "description": "Флагманский смартфон с титановым корпусом и искусственным интеллектом",
+                "description": "Флагманский смартфон с титановым корпусом",
                 "specifications": {
                     "Оперативная память": "12 ГБ",
                     "Процессор": "Snapdragon 8 Gen 3",
@@ -31,9 +33,9 @@ class Product(BaseModel):
         }
 
 class ProductUpdate(BaseModel):
-    name: Optional[str] = Field(None, description="Название модели")
-    brand: Optional[str] = Field(None, description="Бренд")
-    category: Optional[str] = Field(None, description="Категория")
-    price: Optional[float] = Field(None, gt=0, description="Новая цена в рублях")
-    description: Optional[str] = Field(None, description="Новое описание")
-    specifications: Optional[Dict[str, str]] = Field(None, description="Характеристики")
+    name: Optional[str] = None
+    brand: Optional[str] = None
+    category: Optional[str] = None
+    price: Optional[float] = Field(None, gt=0)
+    description: Optional[str] = None
+    specifications: Optional[Dict[str, str]] = None
