@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Добавление новой модели{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm p-4">
+            <h3 class="fw-bold mb-2"><i class="bi bi-plus-square text-warning me-2"></i>Новый товар в каталог</h3>
+            <p class="text-muted mb-4">Внесите данные об устройстве для сохранения в MongoDB</p>
+
+            {% if error %}
+            <div class="alert alert-danger" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}
+            </div>
+            {% endif %}
+
+            <form method="POST" action="/admin/products/new">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Артикул (SKU) <span class="text-danger">*</span></label>
+                        <input type="text" name="sku" class="form-control" placeholder="например: APL-IP16P-256" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Название модели <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" placeholder="например: Apple iPhone 16 Pro" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Бренд <span class="text-danger">*</span></label>
+                        <input type="text" name="brand" class="form-control" placeholder="Apple, Samsung, Xiaomi" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Категория <span class="text-danger">*</span></label>
+                        <input type="text" name="category" class="form-control" placeholder="Смартфоны, Ноутбуки" required>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label fw-semibold">Цена (руб.) <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" name="price" class="form-control" placeholder="129990.00" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Описание товара <span class="text-danger">*</span></label>
+                        <textarea name="description" class="form-control" rows="3" placeholder="Краткое описание преимуществ..." required></textarea>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                        <h5 class="fw-bold border-bottom pb-2">Технические характеристики</h5>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Экран / Дисплей</label>
+                        <input type="text" name="spec_screen" class="form-control" placeholder="6.3 дюйма OLED 120 Гц">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Процессор</label>
+                        <input type="text" name="spec_cpu" class="form-control" placeholder="Apple A18 Pro / Snapdragon 8 Gen 3">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Оперативная память</label>
+                        <input type="text" name="spec_ram" class="form-control" placeholder="8 ГБ">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Встроенная память</label>
+                        <input type="text" name="spec_storage" class="form-control" placeholder="256 ГБ">
+                    </div>
+
+                    <div class="col-12 mt-4 d-flex justify-content-between">
+                        <a href="/" class="btn btn-outline-secondary">Отмена</a>
+                        <button type="submit" class="btn btn-warning px-4 fw-semibold">
+                            <i class="bi bi-save me-1"></i>Сохранить товар
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

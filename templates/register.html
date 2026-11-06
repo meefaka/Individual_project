@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Регистрация пользователя{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card border-0 shadow-sm p-4">
+            <h3 class="fw-bold mb-2 text-center"><i class="bi bi-person-plus text-primary me-2"></i>Регистрация</h3>
+            <p class="text-muted text-center small mb-4">Создайте аккаунт с назначением системной роли</p>
+
+            {% if error %}
+            <div class="alert alert-danger py-2 small" role="alert">
+                <i class="bi bi-exclamation-triangle me-1"></i>{{ error }}
+            </div>
+            {% endif %}
+
+            <form method="POST" action="/register">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Имя пользователя / ФИО</label>
+                    <input type="text" name="username" class="form-control" placeholder="Анастасия (Менеджер)" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Электронная почта (Email)</label>
+                    <input type="email" name="email" class="form-control" placeholder="name@store.ru" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Пароль</label>
+                    <input type="password" name="password" class="form-control" placeholder="минимум 4 символа" minlength="4" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small">Роль в системе</label>
+                    <select name="role" class="form-select" required>
+                        <option value="покупатель">Покупатель (клиент витрины)</option>
+                        <option value="менеджер каталога">Менеджер каталога (управление товарами)</option>
+                        <option value="кладовщик">Кладовщик (складской учет)</option>
+                        <option value="менеджер по ценообразованию">Менеджер по ценообразованию (скидки, цены)</option>
+                        <option value="модератор">Модератор (отзывы и рейтинги)</option>
+                        <option value="администратор">Администратор системы</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 fw-semibold mb-3">Зарегистрироваться</button>
+                <div class="text-center small">
+                    Уже есть аккаунт? <a href="/login">Войти</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

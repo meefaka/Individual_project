@@ -1,113 +1,71 @@
 from typing import List, Optional
-from fastapi import APIRouter, Body, HTTPException, Path, Query, status
+from beanie import PydanticObjectId
+from fastapi import APIRouter, HTTPException, Path, Query, status
+from database.connection import Database
 from models.products import Product, ProductUpdate
 
 product_router = APIRouter(tags=["Товары каталога"])
+product_database = Database(Product)
 
-products: List[Product] = []
-
-@product_router.get("/", response_model=List[Product], summary="Получение всех товаров")
+@product_router.get("/", response_model=List[Product], summary="Получение всех товаров с фильтрацией")
 async def retrieve_all_products(
-    brand: Optional[str] = Query(None, description="Фильтр по бренду (например, Samsung, Apple)"),
+    brand: Optional[str] = Query(None, description="Фильтр по бренду (например, Apple, Samsung)"),
     category: Optional[str] = Query(None, description="Фильтр по категории (например, Смартфоны, Ноутбуки)")
 ) -> List[Product]:
-    # 1. Если вообще ни одного товара еще не добавлено
+    query = {}
+    if brand:
+        query["brand"] = {"$regex": f"^{brand}$", "$options": "i"}
+    if category:
+        query["category"] = {"$regex": f"^{category}$", "$options": "i"}
+
+    products = await Product.find(query).to_list()
     if not products:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Каталог пуст: в магазине пока нет ни одного товара"
+            detail="Товары по заданным критериям не найдены"
         )
-
-    res = products
-    if brand:
-        res = [p for p in res if p.brand.lower() == brand.lower()]
-    if category:
-        res = [p for p in res if p.category.lower() == category.lower()]
-
-    # 2. Если по фильтрам ничего не найдено
-    if not res:
-        conditions = []
-        if brand:
-            conditions.append(f"бренда '{brand}'")
-        if category:
-            conditions.append(f"в категории '{category}'")
-        
-        detail_msg = f"Товары {', '.join(conditions)} в настоящий момент отсутствуют в наличии"
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=detail_msg
-        )
-
-    return res
+    return products
 
 @product_router.get("/{id}", response_model=Product, summary="Получение товара по ID")
-async def retrieve_product(id: int = Path(..., gt=0, description="ID товара")) -> Product:
-    for product in products:
-        if product.id == id:
-            return product
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Ошибка: Товар с идентификатором ID={id} не найден в каталоге"
-    )
-
-@product_router.post("/new", status_code=status.HTTP_201_CREATED, summary="Заведение товара в каталог")
-async def create_product(body: Product = Body(...)) -> dict:
-    for product in products:
-        if product.id == body.id:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=f"Ошибка: Товар с ID={body.id} уже существует в базе! Пожалуйста, укажите другой ID."
-            )
-        if product.sku == body.sku:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=f"Ошибка: Товар с артикулом (SKU) '{body.sku}' уже добавлен в систему!"
-            )
-    products.append(body)
-    return {
-        "message": "Товар успешно добавлен в каталог",
-        "product_id": body.id
-    }
-
-@product_router.put("/{id}", summary="Обновление данных товара")
-async def update_product(data: ProductUpdate, id: int = Path(..., gt=0)) -> dict:
-    for product in products:
-        if product.id == id:
-            if data.name is not None:
-                product.name = data.name
-            if data.brand is not None:
-                product.brand = data.brand
-            if data.category is not None:
-                product.category = data.category
-            if data.price is not None:
-                product.price = data.price
-            if data.description is not None:
-                product.description = data.description
-            if data.specifications is not None:
-                product.specifications = data.specifications
-            return {"message": f"Данные товара с ID={id} успешно обновлены"}
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Невозможно обновить: товар с ID={id} отсутствует в каталоге"
-    )
-
-@product_router.delete("/{id}", summary="Удаление товара по ID")
-async def delete_product(id: int = Path(..., gt=0)) -> dict:
-    for product in products:
-        if product.id == id:
-            products.remove(product)
-            return {"message": f"Товар с ID={id} успешно удален из каталога"}
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Товар с ID={id} не найден для удаления"
-    )
-
-@product_router.delete("/", summary="Удаление всех товаров")
-async def delete_all_products() -> dict:
-    if not products:
+async def retrieve_product(id: PydanticObjectId = Path(..., description="ID товара в MongoDB")) -> Product:
+    product = await product_database.get(id)
+    if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Каталог уже пуст, нечего удалять"
+            detail=f"Товар с ID={id} не найден в каталоге"
         )
-    products.clear()
-    return {"message": "Все товары успешно удалены из каталога"}
+    return product
+
+@product_router.post("/new", status_code=status.HTTP_201_CREATED, summary="Заведение товара в каталог")
+async def create_product(body: Product) -> dict:
+    existing_sku = await Product.find_one(Product.sku == body.sku)
+    if existing_sku:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Товар с артикулом '{body.sku}' уже существует в базе"
+        )
+    await product_database.save(body)
+    return {
+        "message": "Товар успешно добавлен в MongoDB",
+        "product_id": str(body.id)
+    }
+
+@product_router.put("/{id}", response_model=Product, summary="Обновление данных товара")
+async def update_product(id: PydanticObjectId, body: ProductUpdate) -> Product:
+    updated = await product_database.update(id, body)
+    if not updated:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Невозможно обновить: товар с ID={id} отсутствует в базе"
+        )
+    return updated
+
+@product_router.delete("/{id}", summary="Удаление товара по ID")
+async def delete_product(id: PydanticObjectId = Path(..., description="ID товара")) -> dict:
+    deleted = await product_database.delete(id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Товар с ID={id} не найден для удаления"
+        )
+    return {"message": f"Товар с ID={id} успешно удален из базы данных"}

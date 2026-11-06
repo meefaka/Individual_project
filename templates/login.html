@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Вход в систему{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm p-4">
+            <h3 class="fw-bold mb-2 text-center"><i class="bi bi-box-arrow-in-right text-primary me-2"></i>Авторизация</h3>
+            <p class="text-muted text-center small mb-4">Вход в панель управления магазином</p>
+
+            {% if error %}
+            <div class="alert alert-danger py-2 small" role="alert">
+                <i class="bi bi-exclamation-circle me-1"></i>{{ error }}
+            </div>
+            {% endif %}
+
+            <form method="POST" action="/login">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Электронная почта</label>
+                    <input type="email" name="email" class="form-control" placeholder="name@store.ru" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small">Пароль</label>
+                    <input type="password" name="password" class="form-control" placeholder="Ваш пароль" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 fw-semibold mb-3">Войти</button>
+                <div class="text-center small">
+                    Нет учетной записи? <a href="/register">Зарегистрироваться</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} | Характеристики{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Каталог</a></li>
+        <li class="breadcrumb-item">{{ product.category }}</li>
+        <li class="breadcrumb-item active">{{ product.name }}</li>
+    </ol>
+</nav>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm p-4 h-100">
+            <span class="badge bg-info-subtle text-info border w-auto align-self-start mb-2">{{ product.brand }}</span>
+            <h2 class="fw-bold mb-2">{{ product.name }}</h2>
+            <p class="text-muted mb-3">Код товара (SKU): <code>{{ product.sku }}</code></p>
+            
+            <h3 class="text-success fw-bold my-3">{{ "{:,.2f}".format(product.price) }} ₽</h3>
+            
+            <h5 class="fw-semibold mt-3">Описание:</h5>
+            <p class="text-secondary leading-relaxed">{{ product.description }}</p>
+
+            <div class="mt-auto pt-3 border-top d-flex flex-wrap gap-2 align-items-center">
+                <a href="/" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>В каталог</a>
+                
+                <!-- Кнопка редактирования -->
+                <a href="/admin/products/{{ product.id }}/edit" class="btn btn-warning text-dark">
+                    <i class="bi bi-pencil-square me-1"></i>Редактировать
+                </a>
+
+                <!-- Кнопка удаления -->
+                <form method="POST" action="/admin/products/{{ product.id }}/delete" onsubmit="return confirm('Вы уверены, что хотите удалить товар из базы данных?');" class="ms-auto">
+                    <button type="submit" class="btn btn-outline-danger">
+                        <i class="bi bi-trash3 me-1"></i>Удалить
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm p-4">
+            <h4 class="fw-bold mb-3"><i class="bi bi-sliders me-2 text-primary"></i>Спецификации устройства</h4>
+            
+            {% if product.specifications %}
+            <table class="table table-striped align-middle mb-0">
+                <tbody>
+                    {% for key, val in product.specifications.items() %}
+                    <tr>
+                        <th class="text-muted w-50" scope="row">{{ key }}</th>
+                        <td class="fw-semibold text-dark">{{ val }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted">Технические спецификации для данной модели не указаны.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

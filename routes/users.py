@@ -1,30 +1,32 @@
 from fastapi import APIRouter, HTTPException, status
-from models.users import NewUser, UserSignIn
+from database.connection import Database
+from models.users import User, UserSignIn
 
 user_router = APIRouter(tags=["User"])
+user_database = Database(User)
 
-users = {}
-
-@user_router.post("/signup", status_code=status.HTTP_201_CREATED)
-async def sign_new_user(data: NewUser) -> dict:
-    if data.email in users:
+@user_router.post("/signup", status_code=status.HTTP_201_CREATED, summary="Регистрация нового пользователя")
+async def sign_new_user(user: User) -> dict:
+    user_exist = await User.find_one(User.email == user.email)
+    if user_exist:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Пользователь с такой почтой уже существует"
+            detail="Пользователь с такой почтой уже зарегистрирован"
         )
-    users[data.email] = data
-    return {"message": "Пользователь успешно зарегистрирован!"}
+    await user_database.save(user)
+    return {"message": "Пользователь успешно зарегистрирован в MongoDB!"}
 
-@user_router.post("/signin")
+@user_router.post("/signin", summary="Вход пользователя в систему")
 async def sign_user_in(user: UserSignIn) -> dict:
-    if user.email not in users:
+    user_exist = await User.find_one(User.email == user.email)
+    if not user_exist:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Пользователь не найден"
+            detail="Пользователь с таким email не найден"
         )
-    if users[user.email].password != user.password:
+    if user_exist.password != user.password:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Неверные учетные данные"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Неверный пароль"
         )
     return {"message": "Вход выполнен успешно!"}
